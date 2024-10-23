@@ -1,0 +1,53 @@
+package kiszh2gyak;
+
+import java.util.Scanner;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+
+public class main {
+    public static void main(String[] args) {
+        String input = null;
+        String output = null;
+        String pattern = "";
+
+        // Opciók feldolgozása
+        for (int i = 0; i < args.length; i++) {
+            if ((i + 1 < args.length) && args[i].equals("-i")) {
+                i++;
+                input = args[i];
+            } else if ((i + 1 < args.length) && args[i].equals("-o")) {
+                i++;
+                output = args[i];
+            } else if ((i + 1 < args.length) && args[i].equals("-p")) {
+                i++;
+                pattern = args[i];
+            }
+        }
+
+        // Ellenőrzések
+        if (input == null || output == null || pattern.isEmpty()) {
+            System.err.println("Kérjük, adjon meg bemeneti fájlt, kimeneti fájlt és mintát!");
+            System.exit(1);
+        }
+
+        // Fájlok olvasása és írása
+        try (BufferedReader reader = new BufferedReader(new FileReader(input));
+             BufferedWriter writer = new BufferedWriter(new FileWriter(output))) {
+             
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.matches(pattern)) {
+                    writer.write(line);
+                    writer.newLine();
+                }
+            }
+            System.out.println("A szűrés befejeződött. A találatok a " + output + " fájlba íródnak.");
+        } catch (IOException e) {
+            System.err.println("Hiba történt a fájlok olvasása/írása során: " + e.getMessage());
+        }
+    }
+}

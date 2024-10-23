@@ -1,0 +1,29 @@
+package kiszh2gyak;
+
+import java.util.Scanner;
+
+public class main {
+    public static void main(String[] args) {
+        // Ellenőrizzük, hogy van-e megadva mintázat
+        if (args.length < 1) {
+            System.err.println("Kérjük, adjon meg egy mintát a parancssori argumentumok között!");
+            System.exit(1);
+        }
+
+        String minta = args[0];
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Írja be a sorokat (Ctrl+D a végzéshez):");
+
+        // Olvassuk be a sorokat
+        while (scanner.hasNextLine()) {
+            String sor = scanner.nextLine();
+            // Ellenőrizzük, hogy a sor megfelel-e a mintának
+            if (sor.matches(minta)) {
+                System.out.println(sor);
+            }
+        }
+
+        scanner.close();
+    }
+}
