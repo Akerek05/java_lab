@@ -5,14 +5,21 @@ public class Board {
 private Piece[][] pieces;
 public Board() {
 	pieces = new Piece[8][8];
-	setupBoard();
+	
 }
 public Piece[][] getPieces() {
 	return pieces;
 }
+public void setupEmptyBoard() {
+    for (int x = 0; x < 8; x++) {
+        for (int y = 0; y < 8; y++) {
+            pieces[x][y] = new Empty(); // Fill with empty pieces
+        }
+    }
+}
 
 public void setupBoard() {
-    pieces = new Piece[8][8]; // Assuming 'pieces' is a 2D array of Piece objects
+    pieces = new Piece[8][8]; 
 
     // Set up pawns
     for (int i = 0; i < 8; i++) {
@@ -53,23 +60,56 @@ public void setupBoard() {
         }
     }
 }
+
 public List<Move> filterMoves(int x, int y) {
     List<Move> moves = pieces[x][y].possibleMovesFrom(x, y);
     List<Move> validMoves = new ArrayList<>();
+    Piece currentPiece = pieces[x][y];
 
-    for (int i = 0; i < moves.size(); i++) {
-        Move move = moves.get(i);
-        int targetX = move.getX(); // Assuming Move class has a method getX()
-        int targetY = move.getY(); // Assuming Move class has a method getY()
-        
-        // Example condition: check if the move is within board boundaries
+    for (Move move : moves) {
+        int targetX = move.getX();
+        int targetY = move.getY();
+
+        // Check if the target is within board boundaries
         if (targetX >= 0 && targetX < 8 && targetY >= 0 && targetY < 8) {
-            validMoves.add(move);
+            Piece targetPiece = pieces[targetX][targetY];
+
+            if (move.getMoveType() == Move.MoveType.MOVE) {
+                // For MOVE, check each square along the path is empty until the target
+                if (isPathClear(x, y, targetX, targetY)) {
+                    if (targetPiece.type() == Piece.PieceType.EMPTY) {
+                        validMoves.add(move);
+                    }
+                }
+            } else if (move.getMoveType() == Move.MoveType.ATTACK) {
+                // For ATTACK, path must be clear until the target square, which should have an enemy
+                if (isPathClear(x, y, targetX, targetY) && targetPiece.isNotEmpty() && targetPiece.isWhite() != currentPiece.isWhite()) {
+                    validMoves.add(move);
+                }
+            }
         }
-    
     }
     return validMoves;
 }
+
+private boolean isPathClear(int startX, int startY, int endX, int endY) {
+    int deltaX = Integer.compare(endX, startX);
+    int deltaY = Integer.compare(endY, startY);
+
+    int currentX = startX + deltaX;
+    int currentY = startY + deltaY;
+
+    // Traverse along the path until reaching the end coordinates
+    while (currentX != endX || currentY != endY) {
+        if (pieces[currentX][currentY].type() != Piece.PieceType.EMPTY) {
+            return false;  // Path is blocked by another piece
+        }
+        currentX += deltaX;
+        currentY += deltaY;
+    }
+    return true;  // Path is clear up to (endX, endY)
+}
+
 public Piece[][] getPlayablePieces(boolean white){
 	Piece[][] playablePieces = new Piece[8][8];
 	for(int i=0;i<8;i++) {

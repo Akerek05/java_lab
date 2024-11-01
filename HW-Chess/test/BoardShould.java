@@ -1,5 +1,5 @@
 import static org.junit.jupiter.api.Assertions.*;
-
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +17,7 @@ class BoardShould {
 	@Test
     void testBoardSetup() {
         Board board = new Board();
+        board.setupBoard();
         Piece[][] pieces = board.getPieces();
 
         // Check pawns
@@ -84,7 +85,7 @@ class BoardShould {
 	@Test
     void testGetPlayablePieces() {
         Board board = new Board();
-        board.setupBoard(); // Initialize the board with pieces
+        board.setupBoard();
 
         // Get playable pieces for white
         Piece[][] playableWhitePieces = board.getPlayablePieces(true);
@@ -132,13 +133,13 @@ class BoardShould {
         assertPiece(playableBlackPieces, 7, 6, Piece.PieceType.KNIGHT, false);
         assertPiece(playableBlackPieces, 7, 7, Piece.PieceType.ROOK, false);
     }
-    // Helper method to assert piece type and color at a specific position
+    // Helper method to assert piece type and colour at a specific position
     private void assertPiece(Piece[][] pieces, int x, int y, Piece.PieceType expectedType, boolean expectedIsWhite) {
         assertEquals(expectedType, pieces[x][y].type(), "Unexpected piece type at position (" + x + ", " + y + ")");
         assertEquals(expectedIsWhite, pieces[x][y].isWhite(), "Unexpected piece color at position (" + x + ", " + y + ")");
     }
     
-    
+ // Helper method to count playable pieces of a specific colour
 	private int countPlayablePieces(Piece[][] pieces, boolean isWhite) {
 	    int count = 0;
 	    for (int i = 0; i < pieces.length; i++) {
@@ -151,5 +152,45 @@ class BoardShould {
 	    return count;
 	}
 	
+	 @Test
+	    public void testFilterMoves() {
+		 	Board board = new Board();
+		 	board.setupEmptyBoard();
+		 	// Scenario 1: Test a white pawn move from initial position
+	        board.getPieces()[1][0] = new Pawn(true);  // Place a white pawn at (1, 0)
+	        List<Move> pawnMoves = board.filterMoves(1, 0); 
+	        assertEquals(2, pawnMoves.size(), "Pawn should have two initial moves from (1,0)");
+	        assertTrue(pawnMoves.contains(new Move(2, 0, Move.MoveType.MOVE)), "Pawn can move to (2,0)");
+	        assertTrue(pawnMoves.contains(new Move(3, 0, Move.MoveType.MOVE)), "Pawn can move to (3,0)");
 
-}
+	        // Scenario 2: Place a black piece in front of the pawn to block its movement
+	        board.setupEmptyBoard();
+	        board.getPieces()[2][0] = new Rook(false);  // Place a black rook at (2, 0)
+	        pawnMoves = board.filterMoves(1, 0);
+	        assertEquals(0, pawnMoves.size(), "Pawn's move should be blocked by black rook");
+
+	        // Scenario 3: Test a white rook's moves with no obstruction
+	        board.setupEmptyBoard();
+	        board.getPieces()[0][0] = new Rook(true);  // White rook at (0, 0)
+	        List<Move> rookMoves = board.filterMoves(0, 0);
+	        assertTrue(rookMoves.contains(new Move(1, 0, Move.MoveType.MOVE)), "Rook can move to (1,0)");
+	        assertTrue(rookMoves.contains(new Move(0, 1, Move.MoveType.MOVE)), "Rook can move to (0,1)");
+
+	        // Scenario 4: Place an enemy piece in a rook's path to allow attack but stop further movement
+	        board.setupEmptyBoard();
+	        board.getPieces()[3][0] = new Pawn(false);  // Place a black pawn at (3, 0)
+	        board.getPieces()[1][0] = new Rook(true);  // Place a black pawn at (3, 0)
+	        rookMoves = board.filterMoves(0, 0);
+	        assertTrue(rookMoves.contains(new Move(3, 0, Move.MoveType.ATTACK)), "Rook can attack at (3,0)");
+	        assertFalse(rookMoves.contains(new Move(4, 0, Move.MoveType.MOVE)), "Rook should not move past attack target");
+
+	        // Scenario 5: Test a black knight's moves that are within board bounds
+	        board.setupEmptyBoard();
+	        board.getPieces()[7][1] = new Knight(false);  // Black knight at (7, 1)
+	        List<Move> knightMoves = board.filterMoves(7, 1);
+	        assertEquals(2, knightMoves.size(), "Knight should have two possible moves from (7,1)");
+	        assertTrue(knightMoves.contains(new Move(5, 0, Move.MoveType.MOVE)), "Knight can move to (5,0)");
+	        assertTrue(knightMoves.contains(new Move(5, 2, Move.MoveType.MOVE)), "Knight can move to (5,2)");
+	    }
+	}
+
