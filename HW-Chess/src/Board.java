@@ -1,8 +1,10 @@
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Random;
+import java.util.Scanner;
 public class Board {
 private Piece[][] pieces;
+private final Scanner scanner = new Scanner(System.in);
 public Board() {
 	pieces = new Piece[8][8];
 	
@@ -152,10 +154,99 @@ public boolean move(int x, int y, Move move) {
     return true; // Move was successful
 }
 
-public void Game(boolean onePlayer,boolean clourPicked) {
-	Board board = new Board();
-	board.setupBoard();
-	
+public void game(boolean onePlayer, boolean colourPicked) {
+    setupBoard();
+    boolean playerTurn = colourPicked; // true if it's player's turn as white
+
+    while (true) {
+        System.out.println(this); // Display the current board
+
+        if (isCheckmate(playerTurn)) {
+            System.out.println((playerTurn ? "White" : "Black") + " is in checkmate. Game over!");
+            break;
+        }
+
+        if (playerTurn) {
+            System.out.println("Player's turn (" + (colourPicked ? "White" : "Black") + ")");
+            makePlayerMove(colourPicked);
+        } else if (onePlayer) {
+            System.out.println("Computer's turn");
+            makeComputerMove(!colourPicked); // Computer is the opposite color
+        } else {
+            System.out.println("Other player's turn (" + (!colourPicked ? "White" : "Black") + ")");
+            makePlayerMove(!colourPicked);
+        }
+
+        playerTurn = !playerTurn; // Switch turns
+    }
+}
+private void makePlayerMove(boolean isWhite) {
+    System.out.print("Enter start position (e.g., 1 0): ");
+    int startX = scanner.nextInt();
+    int startY = scanner.nextInt();
+
+    System.out.print("Enter end position (e.g., 2 0): ");
+    int endX = scanner.nextInt();
+    int endY = scanner.nextInt();
+
+    Piece piece = pieces[startX][startY];
+    if (piece.isWhite() != isWhite) {
+        System.out.println("Invalid move: not your piece.");
+        return;
+    }
+
+    List<Move> validMoves = filterMoves(startX, startY);
+    Move move = new Move(endX, endY, getMoveType(startX, startY, endX, endY));
+
+    if (validMoves.contains(move) && move(startX, startY, move)) {
+        System.out.println("Move executed: " + startX + "," + startY + " to " + endX + "," + endY);
+    } else {
+        System.out.println("Invalid move. Try again.");
+    }
+}
+private void makeComputerMove(boolean isWhite) {
+    Random random = new Random();
+    Piece[][] playablePieces = getPlayablePieces(isWhite);
+
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            Piece piece = playablePieces[i][j];
+            if (piece != null) {
+                List<Move> moves = filterMoves(i, j);
+                if (!moves.isEmpty()) {
+                    Move randomMove = moves.get(random.nextInt(moves.size()));
+                    if (move(i, j, randomMove)) {
+                        System.out.println("Computer moves from " + i + "," + j + " to " + randomMove.getX() + "," + randomMove.getY());
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+private boolean isCheckmate(boolean whiteTurn) {
+    Piece[][] playablePieces = getPlayablePieces(whiteTurn);
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            Piece piece = playablePieces[i][j];
+            if (piece != null) {
+                List<Move> moves = filterMoves(i, j);
+                for (Move move : moves) {
+                    if (move(i, j, move)) {
+                        undoMove(i, j, move); // Assuming an undoMove method exists
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    return true;
+}
+private Move.MoveType getMoveType(int startX, int startY, int endX, int endY) {
+    Piece targetPiece = pieces[endX][endY];
+    return targetPiece.isNotEmpty() && targetPiece.isWhite() != pieces[startX][startY].isWhite() 
+        ? Move.MoveType.ATTACK 
+        : Move.MoveType.MOVE;
 }
 
 };
