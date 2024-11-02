@@ -70,20 +70,22 @@ public List<Move> filterMoves(int x, int y) {
         int targetX = move.getX();
         int targetY = move.getY();
 
-        // Check if the target is within board boundaries
+        // Check if target is within boundaries
         if (targetX >= 0 && targetX < 8 && targetY >= 0 && targetY < 8) {
             Piece targetPiece = pieces[targetX][targetY];
 
-            if (move.getMoveType() == Move.MoveType.MOVE) {
-                // For MOVE, check each square along the path is empty until the target
-                if (isPathClear(x, y, targetX, targetY)) {
-                    if (targetPiece.type() == Piece.PieceType.EMPTY) {
-                        validMoves.add(move);
-                    }
+            if (currentPiece.type() == Piece.PieceType.KNIGHT) {
+                // Knights can move without path clearance
+                if (move.getMoveType() == Move.MoveType.MOVE && targetPiece.type() == Piece.PieceType.EMPTY) {
+                    validMoves.add(move);
+                } else if (move.getMoveType() == Move.MoveType.ATTACK && targetPiece.isNotEmpty() && targetPiece.isWhite() != currentPiece.isWhite()) {
+                    validMoves.add(move);
                 }
-            } else if (move.getMoveType() == Move.MoveType.ATTACK) {
-                // For ATTACK, path must be clear until the target square, which should have an enemy
-                if (isPathClear(x, y, targetX, targetY) && targetPiece.isNotEmpty() && targetPiece.isWhite() != currentPiece.isWhite()) {
+            } else {
+                // Other pieces require path clearance
+                if (move.getMoveType() == Move.MoveType.MOVE && isPathClear(x, y, targetX, targetY) && targetPiece.type() == Piece.PieceType.EMPTY) {
+                    validMoves.add(move);
+                } else if (move.getMoveType() == Move.MoveType.ATTACK && isPathClear(x, y, targetX, targetY) && targetPiece.isNotEmpty() && targetPiece.isWhite() != currentPiece.isWhite()) {
                     validMoves.add(move);
                 }
             }
@@ -101,7 +103,10 @@ private boolean isPathClear(int startX, int startY, int endX, int endY) {
 
     // Traverse along the path until reaching the end coordinates
     while (currentX != endX || currentY != endY) {
-        if (pieces[currentX][currentY].type() != Piece.PieceType.EMPTY) {
+    	if (currentX < 0 || currentX >= 8 || currentY < 0 || currentY >= 8) {
+            return false;  // Out of bounds, so path is considered blocked
+        }
+    	if (pieces[currentX][currentY].type() != Piece.PieceType.EMPTY) {
             return false;  // Path is blocked by another piece
         }
         currentX += deltaX;
@@ -122,5 +127,35 @@ public Piece[][] getPlayablePieces(boolean white){
 	return playablePieces;
 }
 
+public boolean move(int x, int y, Move move) {
+    // Validate the move by checking if it's in the list of valid moves
+    List<Move> validMoves = filterMoves(x, y);
+    if (!validMoves.contains(move)) {
+        return false; // Move is invalid
+    }
+
+    int targetX = move.getX();
+    int targetY = move.getY();
+    Piece movingPiece = pieces[x][y];
+
+    // Check the move type
+    if (move.getMoveType() == Move.MoveType.ATTACK) {
+        // Attack move: capture the target piece
+        pieces[targetX][targetY] = movingPiece; // Place the piece in the target position
+        pieces[x][y] = new Empty(); // Clear the original position
+    } else if (move.getMoveType() == Move.MoveType.MOVE) {
+        // Normal move: no capture
+        pieces[targetX][targetY] = movingPiece; // Move piece to the target position
+        pieces[x][y] = new Empty(); // Clear the original position
+    }
+
+    return true; // Move was successful
+}
+
+public void Game(boolean onePlayer,boolean clourPicked) {
+	Board board = new Board();
+	board.setupBoard();
+	
+}
 
 };
