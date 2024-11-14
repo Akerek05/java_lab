@@ -4,7 +4,10 @@ import java.util.Random;
 import java.util.Scanner;
 public class Board {
 private Piece[][] pieces;
-private final Scanner scanner = new Scanner(System.in);
+private Piece[][] previousBoardState1; // Board state before player's move
+private Piece[][] previousBoardState2; // Board state before AI's move
+private Piece[][] previousBoardState3; // Board state before both moves
+
 public Board() {
 	pieces = new Piece[8][8];
 	
@@ -62,39 +65,79 @@ public void setupBoard() {
         }
     }
 }
+private void cloneBoard(Piece[][] sourceBoard, Piece[][] destinationBoard) {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            destinationBoard[i][j] = sourceBoard[i][j].clone();
+        }
+    }
+}
+public void saveBoardState() {
+    // Shift the board states
+	cloneBoard(previousBoardState2, previousBoardState3); 
+    cloneBoard(previousBoardState1, previousBoardState2); 
+	cloneBoard(pieces, previousBoardState1); // Save the current board state to previousBoardState3
+    
+}
 
-public List<Move> filterMoves(int x, int y) {
-    List<Move> moves = pieces[x][y].possibleMovesFrom(x, y);
-    List<Move> validMoves = new ArrayList<>();
-    Piece currentPiece = pieces[x][y];
-
-    for (Move move : moves) {
-        int targetX = move.getX();
-        int targetY = move.getY();
-
-        // Check if target is within boundaries
-        if (targetX >= 0 && targetX < 8 && targetY >= 0 && targetY < 8) {
-            Piece targetPiece = pieces[targetX][targetY];
-
-            if (currentPiece.type() == Piece.PieceType.KNIGHT) {
-                // Knights can move without path clearance
-                if (move.getMoveType() == Move.MoveType.MOVE && targetPiece.type() == Piece.PieceType.EMPTY) {
-                    validMoves.add(move);
-                } else if (move.getMoveType() == Move.MoveType.ATTACK && targetPiece.isNotEmpty() && targetPiece.isWhite() != currentPiece.isWhite()) {
-                    validMoves.add(move);
-                }
-            } else {
-                // Other pieces require path clearance
-                if (move.getMoveType() == Move.MoveType.MOVE && isPathClear(x, y, targetX, targetY) && targetPiece.type() == Piece.PieceType.EMPTY) {
-                    validMoves.add(move);
-                } else if (move.getMoveType() == Move.MoveType.ATTACK && isPathClear(x, y, targetX, targetY) && targetPiece.isNotEmpty() && targetPiece.isWhite() != currentPiece.isWhite()) {
-                    validMoves.add(move);
-                }
+// Reset board to the saved state
+public void restorePreviousState() {
+	cloneBoard(previousBoardState1, pieces); // Restore to the most recent saved state
+	cloneBoard(previousBoardState2, previousBoardState1); // Restore to the most recent saved state
+	cloneBoard(previousBoardState3, previousBoardState2); // Restore to the most recent saved state
+}
+public int[] findKing(boolean isWhite) {
+    for (int x = 0; x < 8; x++) {
+        for (int y = 0; y < 8; y++) {
+            Piece piece = pieces[x][y];
+            if (piece.type() == Piece.PieceType.KING && piece.isWhite() == isWhite) {
+                return new int[]{x, y}; // Return the coordinates of the King
             }
         }
     }
-    return validMoves;
+    return null; // King not found (shouldn't happen in a valid game state)
 }
+
+public List<Move> filterMoves(int x, int y) {
+    List<Move> allMoves = pieces[x][y].possibleMovesFrom(x, y);
+    List<Move> validMoves = new ArrayList<>();
+    Piece currentPiece = pieces[x][y];
+
+    for (Move move : allMoves) {
+        int targetX = move.getX();
+        int targetY = move.getY();
+
+        if (targetX >= 0 && targetX < 8 && targetY >= 0 && targetY < 8) {
+            Piece targetPiece = pieces[targetX][targetY];
+            boolean isValidMove = false;
+
+            if (currentPiece.type() == Piece.PieceType.KNIGHT) {
+                if (move.getMoveType() == Move.MoveType.MOVE && targetPiece.type() == Piece.PieceType.EMPTY) {
+                    isValidMove = true;
+                } else if (move.getMoveType() == Move.MoveType.ATTACK && targetPiece.isNotEmpty() && targetPiece.isWhite() != currentPiece.isWhite()) {
+                    isValidMove = true;
+                }
+            } else {
+                if (move.getMoveType() == Move.MoveType.MOVE && isPathClear(x, y, targetX, targetY) && targetPiece.type() == Piece.PieceType.EMPTY) {
+                    isValidMove = true;
+                } else if (move.getMoveType() == Move.MoveType.ATTACK && isPathClear(x, y, targetX, targetY) && targetPiece.isNotEmpty() && targetPiece.isWhite() != currentPiece.isWhite()) {
+                    isValidMove = true;
+                }
+            }
+
+            if (isValidMove) {
+                validMoves.add(move);
+                System.out.println("Adding valid move: " + move);
+            }
+        }
+    }
+
+    return validMoves.stream()
+            .filter(m -> m.getOriginalX() == x && m.getOriginalY() == y)
+            .toList();
+}
+
+
 
 private boolean isPathClear(int startX, int startY, int endX, int endY) {
     int deltaX = Integer.compare(endX, startX);
@@ -130,29 +173,32 @@ public Piece[][] getPlayablePieces(boolean white){
 }
 
 public boolean move(int x, int y, Move move) {
-    // Validate the move by checking if it's in the list of valid moves
+    System.out.println("Attempting to move piece from (" + x + "," + y + ") to (" + move.getX() + "," + move.getY() + ")");
+
     List<Move> validMoves = filterMoves(x, y);
     if (!validMoves.contains(move)) {
-        return false; // Move is invalid
+        System.out.println("Move rejected: Not in the list of valid moves.");
+        return false;
     }
 
     int targetX = move.getX();
     int targetY = move.getY();
     Piece movingPiece = pieces[x][y];
 
-    // Check the move type
+    System.out.println("Moving piece: " + movingPiece + " to (" + targetX + "," + targetY + ")");
+
     if (move.getMoveType() == Move.MoveType.ATTACK) {
-        // Attack move: capture the target piece
-        pieces[targetX][targetY] = movingPiece; // Place the piece in the target position
-        pieces[x][y] = new Empty(); // Clear the original position
+        pieces[targetX][targetY] = movingPiece;
+        pieces[x][y] = new Empty();
     } else if (move.getMoveType() == Move.MoveType.MOVE) {
-        // Normal move: no capture
-        pieces[targetX][targetY] = movingPiece; // Move piece to the target position
-        pieces[x][y] = new Empty(); // Clear the original position
+        pieces[targetX][targetY] = movingPiece;
+        pieces[x][y] = new Empty();
     }
 
-    return true; // Move was successful
+    System.out.println("Move successful. Updated board.");
+    return true;
 }
+
 
 public void makeComputerMove(boolean isWhite) {
     Random random = new Random();
@@ -166,6 +212,7 @@ public void makeComputerMove(boolean isWhite) {
                 if (!moves.isEmpty()) {
                     Move randomMove = moves.get(random.nextInt(moves.size()));
                     if (move(i, j, randomMove)) {
+                        
                         System.out.println("AI moves from " + i + "," + j + " to " + randomMove.getX() + "," + randomMove.getY());
                         return;
                     }
@@ -176,6 +223,7 @@ public void makeComputerMove(boolean isWhite) {
 
     System.out.println("AI has no valid moves.");
 }
+
 
 public boolean isCheckmate(boolean whiteTurn) {
    /* 

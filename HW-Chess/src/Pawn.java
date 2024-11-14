@@ -14,21 +14,24 @@ public class Pawn extends Piece {
 		List<Move> moves =  new ArrayList<Move>();
 		if(isWhite()) {
 			if(x==1) {
-				moves.add(new Move(x+2,y,Move.MoveType.MOVE));
+				moves.add(new Move(x,y,x+2,y,Move.MoveType.MOVE));
 			}			
-			moves.add(new Move(x+1,y,Move.MoveType.MOVE));							
-			moves.add(new Move(x+1,y-1,Move.MoveType.ATTACK));								
-			moves.add(new Move(x+1,y+1,Move.MoveType.ATTACK));							
+			moves.add(new Move(x,y,x+1,y,Move.MoveType.MOVE));							
+			moves.add(new Move(x,y,x+1,y-1,Move.MoveType.ATTACK));								
+			moves.add(new Move(x,y,x+1,y+1,Move.MoveType.ATTACK));							
 		}
 		else {
 			if(x==6) {
-				moves.add(new Move(x-2,y,Move.MoveType.MOVE));
+				moves.add(new Move(x,y,x-2,y,Move.MoveType.MOVE));
 			}
-			moves.add(new Move(x-1,y,Move.MoveType.MOVE));
-			moves.add(new Move(x-1,y-1,Move.MoveType.ATTACK));								
-			moves.add(new Move(x-1,y+1,Move.MoveType.ATTACK));
+			moves.add(new Move(x,y,x-1,y,Move.MoveType.MOVE));
+			moves.add(new Move(x,y,x-1,y-1,Move.MoveType.ATTACK));								
+			moves.add(new Move(x,y,x-1,y+1,Move.MoveType.ATTACK));
 		}
 		return moves; 
 	}
-	
+	@Override
+    public Piece clone() {
+        return new Pawn(this.isWhite());
+    }
 }

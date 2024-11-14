@@ -160,8 +160,8 @@ class BoardShould {
 	        board.getPieces()[1][0] = new Pawn(true);  // Place a white pawn at (1, 0)
 	        List<Move> pawnMoves = board.filterMoves(1, 0); 
 	        assertEquals(2, pawnMoves.size(), "Pawn should have two initial moves from (1,0)");
-	        assertTrue(pawnMoves.contains(new Move(2, 0, Move.MoveType.MOVE)), "Pawn can move to (2,0)");
-	        assertTrue(pawnMoves.contains(new Move(3, 0, Move.MoveType.MOVE)), "Pawn can move to (3,0)");
+	        assertTrue(pawnMoves.contains(new Move(1,0,2, 0, Move.MoveType.MOVE)), "Pawn can move to (2,0)");
+	        assertTrue(pawnMoves.contains(new Move(1,0,3, 0, Move.MoveType.MOVE)), "Pawn can move to (3,0)");
 
 	        // Scenario 2: Place a black piece in front of the pawn to block its movement
 	        board.setupEmptyBoard();
@@ -173,77 +173,77 @@ class BoardShould {
 	        board.setupEmptyBoard();
 	        board.getPieces()[0][0] = new Rook(true);  // White rook at (0, 0)
 	        List<Move> rookMoves = board.filterMoves(0, 0);
-	        assertTrue(rookMoves.contains(new Move(1, 0, Move.MoveType.MOVE)), "Rook can move to (1,0)");
-	        assertTrue(rookMoves.contains(new Move(0, 1, Move.MoveType.MOVE)), "Rook can move to (0,1)");
+	        assertTrue(rookMoves.contains(new Move(0,0,1, 0, Move.MoveType.MOVE)), "Rook can move to (1,0)");
+	        assertTrue(rookMoves.contains(new Move(0,0,0, 1, Move.MoveType.MOVE)), "Rook can move to (0,1)");
 
 	        // Scenario 4: Place an enemy piece in a rook's path to allow attack but stop further movement
 	        board.setupEmptyBoard();
 	        board.getPieces()[3][0] = new Pawn(false);  // Place a black pawn at (3, 0)
 	        board.getPieces()[0][0] = new Rook(true);  // Place a black pawn at (3, 0)
 	        rookMoves = board.filterMoves(0, 0);
-	        assertTrue(rookMoves.contains(new Move(3, 0, Move.MoveType.ATTACK)), "Rook can attack at (3,0)");
-	        assertFalse(rookMoves.contains(new Move(4, 0, Move.MoveType.MOVE)), "Rook should not move past attack target");
+	        assertTrue(rookMoves.contains(new Move(0,0,3, 0, Move.MoveType.ATTACK)), "Rook can attack at (3,0)");
+	        assertFalse(rookMoves.contains(new Move(0,0,4, 0, Move.MoveType.MOVE)), "Rook should not move past attack target");
 
 	        // Scenario 5: Test a black knight's moves that are within board bounds
 	        board.setupEmptyBoard();
 	        board.getPieces()[7][1] = new Knight(false);  // Black knight at (7, 1)
 	        List<Move> knightMoves = board.filterMoves(7, 1);
 	        assertEquals(3, knightMoves.size(), "Knight should have three possible moves from (7,1)");
-	        assertTrue(knightMoves.contains(new Move(5, 0, Move.MoveType.MOVE)), "Knight can move to (5,0)");
-	        assertTrue(knightMoves.contains(new Move(5, 2, Move.MoveType.MOVE)), "Knight can move to (5,2)");
-	        assertTrue(knightMoves.contains(new Move(6, 3, Move.MoveType.MOVE)), "Knight can move to (6,3)");
+	        assertTrue(knightMoves.contains(new Move(7,1,5, 0, Move.MoveType.MOVE)), "Knight can move to (5,0)");
+	        assertTrue(knightMoves.contains(new Move(7,1,5, 2, Move.MoveType.MOVE)), "Knight can move to (5,2)");
+	        assertTrue(knightMoves.contains(new Move(7,1,6, 3, Move.MoveType.MOVE)), "Knight can move to (6,3)");
 	        
 	        // Scenario 6: Test a white queen's moves with no obstruction
 	        board.setupEmptyBoard();
 	        board.getPieces()[3][3] = new Queen(true);  // Place a white queen at (3, 3)
 	        List<Move> queenMoves = board.filterMoves(3, 3);
-	        assertTrue(queenMoves.contains(new Move(3, 0, Move.MoveType.MOVE)), "Queen can move to (3,0)");
-	        assertTrue(queenMoves.contains(new Move(3, 7, Move.MoveType.MOVE)), "Queen can move to (3,7)");
-	        assertTrue(queenMoves.contains(new Move(0, 3, Move.MoveType.MOVE)), "Queen can move to (0,3)");
-	        assertTrue(queenMoves.contains(new Move(7, 3, Move.MoveType.MOVE)), "Queen can move to (7,3)");
-	        assertTrue(queenMoves.contains(new Move(0, 0, Move.MoveType.MOVE)), "Queen can move to (0,0)");
-	        assertTrue(queenMoves.contains(new Move(7, 7, Move.MoveType.MOVE)), "Queen can move to (7,7)");
+	        assertTrue(queenMoves.contains(new Move(3, 3,3, 0, Move.MoveType.MOVE)), "Queen can move to (3,0)");
+	        assertTrue(queenMoves.contains(new Move(3, 3,3, 7, Move.MoveType.MOVE)), "Queen can move to (3,7)");
+	        assertTrue(queenMoves.contains(new Move(3, 3,0, 3, Move.MoveType.MOVE)), "Queen can move to (0,3)");
+	        assertTrue(queenMoves.contains(new Move(3, 3,7, 3, Move.MoveType.MOVE)), "Queen can move to (7,3)");
+	        assertTrue(queenMoves.contains(new Move(3, 3,0, 0, Move.MoveType.MOVE)), "Queen can move to (0,0)");
+	        assertTrue(queenMoves.contains(new Move(3, 3,7, 7, Move.MoveType.MOVE)), "Queen can move to (7,7)");
 
 	        // Scenario 7: Place an enemy piece in the queen's path
 	        board.setupEmptyBoard();
 	        board.getPieces()[3][3] = new Queen(true);  // Place a white queen at (3, 3)
 	        board.getPieces()[5][3] = new Rook(false);  // Place a black rook at (5, 3)
 	        queenMoves = board.filterMoves(3, 3);
-	        assertTrue(queenMoves.contains(new Move(5, 3, Move.MoveType.ATTACK)), "Queen can attack at (5,3)");
-	        assertFalse(queenMoves.contains(new Move(6, 3, Move.MoveType.MOVE)), "Queen should not move past attack target");
+	        assertTrue(queenMoves.contains(new Move(3, 3,5, 3, Move.MoveType.ATTACK)), "Queen can attack at (5,3)");
+	        assertFalse(queenMoves.contains(new Move(3, 3,6, 3, Move.MoveType.MOVE)), "Queen should not move past attack target");
 
 	        // Scenario 8: Test a white bishop's moves with no obstruction
 	        board.setupEmptyBoard();
 	        board.getPieces()[2][2] = new Bishop(true);  // Place a white bishop at (2, 2)
 	        List<Move> bishopMoves = board.filterMoves(2, 2);
-	        assertTrue(bishopMoves.contains(new Move(0, 0, Move.MoveType.MOVE)), "Bishop can move to (0,0)");
-	        assertTrue(bishopMoves.contains(new Move(5, 5, Move.MoveType.MOVE)), "Bishop can move to (5,5)");
+	        assertTrue(bishopMoves.contains(new Move(2, 2,0, 0, Move.MoveType.MOVE)), "Bishop can move to (0,0)");
+	        assertTrue(bishopMoves.contains(new Move(2, 2,5, 5, Move.MoveType.MOVE)), "Bishop can move to (5,5)");
 
 	        // Scenario 9: Place an enemy piece in the bishop's path
 	        board.setupEmptyBoard();
 	        board.getPieces()[2][2] = new Bishop(true);  // Place a white bishop at (2, 2)
 	        board.getPieces()[4][4] = new Pawn(false);   // Place a black pawn at (4, 4)
 	        bishopMoves = board.filterMoves(2, 2);
-	        assertTrue(bishopMoves.contains(new Move(4, 4, Move.MoveType.ATTACK)), "Bishop can attack at (4,4)");
-	        assertFalse(bishopMoves.contains(new Move(5, 5, Move.MoveType.MOVE)), "Bishop should not move past attack target");
+	        assertTrue(bishopMoves.contains(new Move(2, 2,4, 4, Move.MoveType.ATTACK)), "Bishop can attack at (4,4)");
+	        assertFalse(bishopMoves.contains(new Move(2, 2,5, 5, Move.MoveType.MOVE)), "Bishop should not move past attack target");
 
 	        // Scenario 10: Test a king's moves with no obstruction
 	        board.setupEmptyBoard();
 	        board.getPieces()[4][4] = new King(true);  // Place a white king at (4, 4)
 	        List<Move> kingMoves = board.filterMoves(4, 4);
-	        assertTrue(kingMoves.contains(new Move(3, 3, Move.MoveType.MOVE)), "King can move to (3,3)");
-	        assertTrue(kingMoves.contains(new Move(3, 4, Move.MoveType.MOVE)), "King can move to (3,4)");
-	        assertTrue(kingMoves.contains(new Move(3, 5, Move.MoveType.MOVE)), "King can move to (3,5)");
-	        assertTrue(kingMoves.contains(new Move(5, 3, Move.MoveType.MOVE)), "King can move to (5,3)");
-	        assertTrue(kingMoves.contains(new Move(5, 4, Move.MoveType.MOVE)), "King can move to (5,4)");
-	        assertTrue(kingMoves.contains(new Move(5, 5, Move.MoveType.MOVE)), "King can move to (5,5)");
+	        assertTrue(kingMoves.contains(new Move(4, 4,3, 3, Move.MoveType.MOVE)), "King can move to (3,3)");
+	        assertTrue(kingMoves.contains(new Move(4, 4,3, 4, Move.MoveType.MOVE)), "King can move to (3,4)");
+	        assertTrue(kingMoves.contains(new Move(4, 4,3, 5, Move.MoveType.MOVE)), "King can move to (3,5)");
+	        assertTrue(kingMoves.contains(new Move(4, 4,5, 3, Move.MoveType.MOVE)), "King can move to (5,3)");
+	        assertTrue(kingMoves.contains(new Move(4, 4,5, 4, Move.MoveType.MOVE)), "King can move to (5,4)");
+	        assertTrue(kingMoves.contains(new Move(4, 4,5, 5, Move.MoveType.MOVE)), "King can move to (5,5)");
 
 	        // Scenario 11: Test a king's moves with an adjacent enemy piece
 	        board.setupEmptyBoard();
 	        board.getPieces()[4][4] = new King(true);  // Place a white king at (4, 4)
 	        board.getPieces()[4][5] = new Pawn(false); // Place a black pawn at (4, 5)
 	        kingMoves = board.filterMoves(4, 4);
-	        assertTrue(kingMoves.contains(new Move(4, 5, Move.MoveType.ATTACK)), "King can attack at (4,5)");
+	        assertTrue(kingMoves.contains(new Move(4, 4,4, 5, Move.MoveType.ATTACK)), "King can attack at (4,5)");
 	    }
 	
 	@Test
@@ -255,7 +255,7 @@ class BoardShould {
 	    board.getPieces()[1][0] = new Pawn(true);
 	
 	    // Test moving the pawn forward by one square
-	    boolean moveSuccess = board.move(1, 0, new Move(2, 0, Move.MoveType.MOVE));
+	    boolean moveSuccess = board.move(1, 0, new Move(1,0,2, 0, Move.MoveType.MOVE));
 	    assertTrue(moveSuccess, "Pawn should be able to move forward to (2, 0)");
 	    assertTrue(board.getPieces()[2][0] instanceof Pawn, "Pawn should be at (2, 0)");
 	    assertTrue(board.getPieces()[1][0] instanceof Empty, "Original position (1, 0) should be empty");
@@ -271,7 +271,7 @@ class BoardShould {
 	    board.getPieces()[2][0] = new Rook(false);
 	
 	    // Try to move the pawn forward to the blocked square
-	    boolean moveSuccess = board.move(1, 0, new Move(2, 0, Move.MoveType.MOVE));
+	    boolean moveSuccess = board.move(1, 0, new Move(1,0,2, 0, Move.MoveType.MOVE));
 	    assertFalse(moveSuccess, "Pawn should not be able to move to (2, 0) as it is blocked by a piece");
 	    assertTrue(board.getPieces()[1][0] instanceof Pawn, "Pawn should remain at (1, 0)");
 	}
@@ -286,7 +286,7 @@ class BoardShould {
 	    board.getPieces()[0][3] = new Pawn(false);
 	
 	    // Test rook attack move
-	    boolean moveSuccess = board.move(0, 0, new Move(0, 3, Move.MoveType.ATTACK));
+	    boolean moveSuccess = board.move(0, 0, new Move(0,0,0, 3, Move.MoveType.ATTACK));
 	    assertTrue(moveSuccess, "Rook should be able to attack the black pawn at (0, 3)");
 	    assertTrue(board.getPieces()[0][3] instanceof Rook, "Rook should be at (0, 3) after the attack");
 	    assertTrue(board.getPieces()[0][0] instanceof Empty, "Original position (0, 0) should be empty");
@@ -301,7 +301,7 @@ class BoardShould {
 	    board.getPieces()[7][1] = new Knight(false);
 	
 	    // Attempt an invalid move
-	    boolean moveSuccess = board.move(7, 1, new Move(7, 3, Move.MoveType.MOVE));
+	    boolean moveSuccess = board.move(7, 1, new Move(7,1,7, 3, Move.MoveType.MOVE));
 	    assertFalse(moveSuccess, "Knight should not be able to move horizontally to (7, 3)");
 	    assertTrue(board.getPieces()[7][1] instanceof Knight, "Knight should remain at (7, 1)");
 	}
@@ -316,13 +316,13 @@ class BoardShould {
 	    board.getPieces()[5][5] = new Knight(false);
 	
 	    // Test moving the king to an adjacent empty square
-	    boolean moveSuccess = board.move(4, 4, new Move(4, 5, Move.MoveType.MOVE));
+	    boolean moveSuccess = board.move(4, 4, new Move(4,4,4, 5, Move.MoveType.MOVE));
 	    assertTrue(moveSuccess, "King should be able to move to (4, 5)");
 	    assertTrue(board.getPieces()[4][5] instanceof King, "King should be at (4, 5)");
 	    assertTrue(board.getPieces()[4][4] instanceof Empty, "Original position (4, 4) should be empty");
 	
 	    // Test the king attacking the black knight
-	    moveSuccess = board.move(4, 5, new Move(5, 5, Move.MoveType.ATTACK));
+	    moveSuccess = board.move(4, 5, new Move(4,5,5, 5, Move.MoveType.ATTACK));
 	    assertTrue(moveSuccess, "King should be able to attack the black knight at (5, 5)");
 	    assertTrue(board.getPieces()[5][5] instanceof King, "King should be at (5, 5) after attack");
 	    assertTrue(board.getPieces()[4][5] instanceof Empty, "Original position (4, 5) should be empty");
@@ -337,7 +337,7 @@ class BoardShould {
 	    board.getPieces()[0][0] = new Queen(true);
 	
 	    // Test moving the queen diagonally
-	    boolean moveSuccess = board.move(0, 0, new Move(4, 4, Move.MoveType.MOVE));
+	    boolean moveSuccess = board.move(0, 0, new Move(0,0,4, 4, Move.MoveType.MOVE));
 	    assertTrue(moveSuccess, "Queen should be able to move to (4, 4) diagonally");
 	    assertTrue(board.getPieces()[4][4] instanceof Queen, "Queen should be at (4, 4)");
 	    assertTrue(board.getPieces()[0][0] instanceof Empty, "Original position (0, 0) should be empty");
@@ -348,7 +348,7 @@ class BoardShould {
 	    board.getPieces()[2][2] = new Pawn(false);
 	
 	    // Test move blocked by pawn
-	    moveSuccess = board.move(0, 0, new Move(4, 4, Move.MoveType.MOVE));
+	    moveSuccess = board.move(0, 0, new Move(0,0,4, 4, Move.MoveType.MOVE));
 	    assertFalse(moveSuccess, "Queen should not be able to move to (4, 4) as path is blocked by a pawn");
 	    assertTrue(board.getPieces()[0][0] instanceof Queen, "Queen should remain at (0, 0)");
 	}

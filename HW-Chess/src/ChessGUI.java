@@ -153,7 +153,7 @@ public class ChessGUI extends JFrame {
             }
         } else {
             Move.MoveType moveType = board.getMoveType(selectedX, selectedY, x, y);
-            Move move = new Move(x, y, moveType);
+            Move move = new Move(selectedX, selectedY,x, y, moveType);
 
             if (board.filterMoves(selectedX, selectedY).contains(move) && board.move(selectedX, selectedY, move)) {
                 updateBoard();

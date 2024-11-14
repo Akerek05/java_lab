@@ -15,4 +15,8 @@ public class Empty extends Piece {
     public List<Move> possibleMovesFrom(int x, int y) {
         return new ArrayList<>(); // No moves for an empty space
     }
+    @Override
+    public Piece clone() {
+        return new Empty();
+    }
 }

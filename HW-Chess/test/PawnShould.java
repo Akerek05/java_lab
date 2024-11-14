@@ -25,18 +25,18 @@ class PawnShould {
 	    Pawn whitePawn = new Pawn(true);
 	    List<Move> whiteMoves = whitePawn.possibleMovesFrom(1, 1);
 	    assertEquals(4, whiteMoves.size());
-	    assertTrue(whiteMoves.contains(new Move(3, 1, Move.MoveType.MOVE))); // Moving two squares forward
-	    assertTrue(whiteMoves.contains(new Move(2, 1, Move.MoveType.MOVE))); // Moving one squares forward
-	    assertTrue(whiteMoves.contains(new Move(2, 0, Move.MoveType.ATTACK))); // Attacking diagonally left
-	    assertTrue(whiteMoves.contains(new Move(2, 2, Move.MoveType.ATTACK))); // Attacking diagonally right
+	    assertTrue(whiteMoves.contains(new Move(1, 1,3, 1, Move.MoveType.MOVE))); // Moving two squares forward
+	    assertTrue(whiteMoves.contains(new Move(1, 1,2, 1, Move.MoveType.MOVE))); // Moving one squares forward
+	    assertTrue(whiteMoves.contains(new Move(1, 1,2, 0, Move.MoveType.ATTACK))); // Attacking diagonally left
+	    assertTrue(whiteMoves.contains(new Move(1, 1,2, 2, Move.MoveType.ATTACK))); // Attacking diagonally right
 
 	    Pawn blackPawn = new Pawn(false);
 	    List<Move> blackMoves = blackPawn.possibleMovesFrom(6, 1);
 	    assertEquals(4, blackMoves.size());
-	    assertTrue(blackMoves.contains(new Move(4, 1, Move.MoveType.MOVE))); // Moving one square forward
-	    assertTrue(blackMoves.contains(new Move(5, 1, Move.MoveType.MOVE))); // Moving one square forward
-	    assertTrue(blackMoves.contains(new Move(5, 0, Move.MoveType.ATTACK))); // Attacking diagonally left
-	    assertTrue(blackMoves.contains(new Move(5, 2, Move.MoveType.ATTACK))); // Attacking diagonally right
+	    assertTrue(blackMoves.contains(new Move(6, 1,4, 1, Move.MoveType.MOVE))); // Moving one square forward
+	    assertTrue(blackMoves.contains(new Move(6, 1,5, 1, Move.MoveType.MOVE))); // Moving one square forward
+	    assertTrue(blackMoves.contains(new Move(6, 1,5, 0, Move.MoveType.ATTACK))); // Attacking diagonally left
+	    assertTrue(blackMoves.contains(new Move(6, 1,5, 2, Move.MoveType.ATTACK))); // Attacking diagonally right
 	}
 
 	

@@ -17,9 +17,13 @@ public class King extends Piece {
         // King's one-square moves in all directions for both movement and attack
         int[][] kingMoves = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
         for (int[] move : kingMoves) {
-            moves.add(new Move(x + move[0], y + move[1], Move.MoveType.MOVE));
-            moves.add(new Move(x + move[0], y + move[1], Move.MoveType.ATTACK));
+            moves.add(new Move(x,y,x + move[0], y + move[1], Move.MoveType.MOVE));
+            moves.add(new Move(x,y,x + move[0], y + move[1], Move.MoveType.ATTACK));
         }
         return moves;
+    }
+    @Override
+    public Piece clone() {
+        return new King(this.isWhite());
     }
 }
