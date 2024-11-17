@@ -16,6 +16,9 @@ public class ChessGUI extends JFrame {
     // The path to the pieces images
     private static final String PIECES_PATH = "./pieces/";
 
+    // Add a new button for surrender
+    private JButton surrenderButton;
+
     public ChessGUI() {
         setupMainMenu();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -88,30 +91,49 @@ public class ChessGUI extends JFrame {
     }
 
     private void setupChessBoard() {
-        JPanel chessBoardPanel = new JPanel(new GridLayout(8, 8));
+        JPanel chessBoardPanel = new JPanel(new BorderLayout());
+        JPanel chessGridPanel = new JPanel(new GridLayout(8, 8));
         boardButtons = new JButton[8][8];
 
+        // Initialize the chessboard
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
                 JButton button = new JButton();
                 button.setBackground((x + y) % 2 == 0 ? Color.WHITE : Color.GRAY);
-                final int fx = x, fy = y; // Required for lambda
+                final int fx = x, fy = y;
                 button.addActionListener(e -> handleSquareClick(fx, fy));
                 boardButtons[x][y] = button;
-                chessBoardPanel.add(button);
+                chessGridPanel.add(button);
             }
         }
 
-        updateBoard();
+        // Set up the surrender button
+        surrenderButton = new JButton("Surrender");
+        surrenderButton.addActionListener(e -> handleSurrender());
+
+        // Adding components to the panel
+        chessBoardPanel.add(chessGridPanel, BorderLayout.CENTER);
+        chessBoardPanel.add(surrenderButton, BorderLayout.SOUTH); // Add surrender button to bottom
+
         setContentPane(chessBoardPanel);
         revalidate();
+        updateBoard();
+    }
+
+    private void handleSurrender() {
+        String winner = whiteTurn ? "Black" : "White"; // Opponent wins
+        JOptionPane.showMessageDialog(this, winner + " wins by surrender!");
+        resetGame();
     }
 
     private void Game(boolean onePlayer, boolean playerIsWhite) {
         while (true) {
             if (board.isCheckmate(whiteTurn)) {
-                JOptionPane.showMessageDialog(this, (whiteTurn ? "White" : "Black") + " is in checkmate. Game over!");
-                break;
+                String winner = whiteTurn ? "Black" : "White"; // The opponent wins
+                JOptionPane.showMessageDialog(this, winner + " wins by checkmate!");
+                resetGame();
+                setupMainMenu(); // Return to the main menu
+                return;
             }
 
             if (onePlayer) {
@@ -128,9 +150,32 @@ public class ChessGUI extends JFrame {
                 waitForPlayerMove(whiteTurn);
             }
 
+            // Check for stalemate (no valid moves but the king is not in check)
+            if (!board.isCheckmate(whiteTurn)) {
+                Piece[][] playablePieces = board.getPlayablePieces(whiteTurn);
+                boolean hasValidMoves = false;
+                for (int i = 0; i < 8; i++) {
+                    for (int j = 0; j < 8; j++) {
+                        Piece piece = playablePieces[i][j];
+                        if (piece != null && !board.filterMoves(i, j).isEmpty()) {
+                            hasValidMoves = true;
+                            break;
+                        }
+                    }
+                    if (hasValidMoves) break;
+                }
+                if (!hasValidMoves) {
+                    JOptionPane.showMessageDialog(this, "Stalemate! The game is a draw.");
+                    resetGame();
+                    setupMainMenu(); // Return to the main menu
+                    return;
+                }
+            }
+
             whiteTurn = !whiteTurn; // Switch turns
         }
     }
+
 
     private synchronized void waitForPlayerMove(boolean isWhiteTurn) {
         try {
@@ -153,7 +198,7 @@ public class ChessGUI extends JFrame {
             }
         } else {
             Move.MoveType moveType = board.getMoveType(selectedX, selectedY, x, y);
-            Move move = new Move(selectedX, selectedY,x, y, moveType);
+            Move move = new Move(selectedX, selectedY, x, y, moveType);
 
             if (board.filterMoves(selectedX, selectedY).contains(move) && board.move(selectedX, selectedY, move)) {
                 updateBoard();
@@ -211,5 +256,12 @@ public class ChessGUI extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(ChessGUI::new);
+    }
+
+    private void resetGame() {
+        board = new Board();
+        board.setupBoard();
+        setupChessBoard();
+        whiteTurn = true; // Reset turn to white
     }
 }

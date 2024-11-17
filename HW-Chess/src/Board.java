@@ -86,23 +86,28 @@ public void restorePreviousState() {
 	cloneBoard(previousBoardState2, previousBoardState1); // Restore to the most recent saved state
 	cloneBoard(previousBoardState3, previousBoardState2); // Restore to the most recent saved state
 }
-public int[] findKing(boolean isWhite) {
-    for (int x = 0; x < 8; x++) {
-        for (int y = 0; y < 8; y++) {
-            Piece piece = pieces[x][y];
-            if (piece.type() == Piece.PieceType.KING && piece.isWhite() == isWhite) {
-                return new int[]{x, y}; // Return the coordinates of the King
-            }
-        }
-    }
-    return null; // King not found (shouldn't happen in a valid game state)
-}
 
 public List<Move> filterMoves(int x, int y) {
     List<Move> allMoves = pieces[x][y].possibleMovesFrom(x, y);
     List<Move> validMoves = new ArrayList<>();
     Piece currentPiece = pieces[x][y];
+    boolean isKingChecked = false; // Flag to track if the current player's king is in check
 
+    // Locate the current player's king
+    int kingX = -1, kingY = -1;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            Piece piece = pieces[i][j];
+            if (piece.type() == Piece.PieceType.KING && piece.isWhite() == currentPiece.isWhite()) {
+                kingX = i;
+                kingY = j;
+                break;
+            }
+        }
+        if (kingX != -1) break;
+    }
+
+    // Check moves for validity
     for (Move move : allMoves) {
         int targetX = move.getX();
         int targetY = move.getY();
@@ -111,10 +116,19 @@ public List<Move> filterMoves(int x, int y) {
             Piece targetPiece = pieces[targetX][targetY];
             boolean isValidMove = false;
 
+            // Validate moves based on piece type
             if (currentPiece.type() == Piece.PieceType.KNIGHT) {
                 if (move.getMoveType() == Move.MoveType.MOVE && targetPiece.type() == Piece.PieceType.EMPTY) {
                     isValidMove = true;
                 } else if (move.getMoveType() == Move.MoveType.ATTACK && targetPiece.isNotEmpty() && targetPiece.isWhite() != currentPiece.isWhite()) {
+                    isValidMove = true;
+                }
+            } else if (currentPiece.type() == Piece.PieceType.KING) {
+                // For the king, ensure the target square is not under attack
+                List<Move> attackingMoves = getAttackingMoves(targetX, targetY, !currentPiece.isWhite());
+                if (move.getMoveType() == Move.MoveType.MOVE && targetPiece.type() == Piece.PieceType.EMPTY && attackingMoves.isEmpty()) {
+                    isValidMove = true;
+                } else if (move.getMoveType() == Move.MoveType.ATTACK && targetPiece.isNotEmpty() && targetPiece.isWhite() != currentPiece.isWhite() && attackingMoves.isEmpty()) {
                     isValidMove = true;
                 }
             } else {
@@ -126,15 +140,71 @@ public List<Move> filterMoves(int x, int y) {
             }
 
             if (isValidMove) {
-                validMoves.add(move);
-                System.out.println("Adding valid move: " + move);
+                // Simulate the move
+                Piece originalPiece = pieces[targetX][targetY];
+                pieces[targetX][targetY] = currentPiece;
+                pieces[x][y] = new Empty(); // Assuming EmptyPiece represents an empty square
+
+                // Check if the king is under attack after this move
+                List<Move> attackingMoves = getAttackingMoves(kingX, kingY, !currentPiece.isWhite());
+                boolean kingInCheckAfterMove = !attackingMoves.isEmpty();
+
+                if (!kingInCheckAfterMove) {
+                    validMoves.add(move); // Add the move if it doesn't leave the king in check
+                } else {
+                    isKingChecked = true; // Flag remains true if any move leaves the king in check
+                }
+
+                // Revert the move
+                pieces[x][y] = currentPiece;
+                pieces[targetX][targetY] = originalPiece;
             }
         }
     }
 
+    // Debug message for the isKingChecked flag
+    System.out.println("Is king in check: " + isKingChecked);
+
     return validMoves.stream()
             .filter(m -> m.getOriginalX() == x && m.getOriginalY() == y)
             .toList();
+}
+
+
+private List<Move> getAttackingMoves(int x, int y, boolean opponentIsWhite) {
+    List<Move> attackingMoves = new ArrayList<>();
+
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            Piece piece = pieces[i][j];
+            if (piece.isNotEmpty() && piece.isWhite() == opponentIsWhite) {
+                List<Move> possibleMoves = piece.possibleMovesFrom(i, j);
+                for (Move move : possibleMoves) {
+                    int targetX = move.getX();
+                    int targetY = move.getY();
+
+                    // Check if the move targets the specified square
+                    if (targetX == x && targetY == y) {
+                        boolean isValid = false;
+
+                        // Special case for knights: no path clearance needed
+                        if (piece.type() == Piece.PieceType.KNIGHT) {
+                            isValid = true;
+                        } else {
+                            // Check if the path is clear for other pieces
+                            isValid = isPathClear(i, j, targetX, targetY);
+                        }
+
+                        if (isValid) {
+                            attackingMoves.add(move);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return attackingMoves;
 }
 
 
@@ -226,24 +296,41 @@ public void makeComputerMove(boolean isWhite) {
 
 
 public boolean isCheckmate(boolean whiteTurn) {
-   /* 
-	Piece[][] playablePieces = getPlayablePieces(whiteTurn);
+    Piece[][] playablePieces = getPlayablePieces(whiteTurn);
+
+    // Locate the current player's king
+    int kingX = -1, kingY = -1;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            Piece piece = pieces[i][j];
+            if (piece.type() == Piece.PieceType.KING && piece.isWhite() == whiteTurn) {
+                kingX = i;
+                kingY = j;
+                break;
+            }
+        }
+        if (kingX != -1) break;
+    }
+
+    // Check if the king is in check
+    boolean kingInCheck = !getAttackingMoves(kingX, kingY, !whiteTurn).isEmpty();
+
+    // Check if there are any valid moves for the current player
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             Piece piece = playablePieces[i][j];
             if (piece != null) {
                 List<Move> moves = filterMoves(i, j);
-                for (Move move : moves) {
-                    if (move(i, j, move)) {
-                        undoMove(i, j, move); // Assuming an undoMove method exists
-                        return false;
-                    }
+                if (!moves.isEmpty()) {
+                    return false; // The player has valid moves
                 }
             }
         }
-    }*/
-    return false;
+    }
+
+    return kingInCheck; // Checkmate occurs if the king is in check and no valid moves exist
 }
+
 public Move.MoveType getMoveType(int startX, int startY, int endX, int endY) {
     Piece targetPiece = pieces[endX][endY];
     return targetPiece.isNotEmpty() && targetPiece.isWhite() != pieces[startX][startY].isWhite() 
