@@ -164,19 +164,41 @@ public class ChessGUI extends JFrame {
                 if (whiteTurn == playerIsWhite) {
                     // Player's turn
                     waitForPlayerMove(true);
+                    promotePawnsIfNeeded(playerIsWhite,onePlayer);
                 } else {
                     // AI's turn
                     board.makeComputerMove(whiteTurn);
                     updateBoard();
+                    promotePawnsIfNeeded(playerIsWhite,onePlayer);  // Check if AI's pawn needs promotion
                 }
             } else {
                 // Two-player mode
                 waitForPlayerMove(whiteTurn);
+                promotePawnsIfNeeded(playerIsWhite,onePlayer);
             }
 
             whiteTurn = !whiteTurn; // Switch turns
         }
     }
+    private void promotePawnsIfNeeded(boolean playerIsWhite,boolean onePlayer) {
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
+                Piece piece = board.getPieces()[x][y];
+                if (piece instanceof Pawn && (x == 0 || x == 7)) {
+                    if (whiteTurn==playerIsWhite ) {
+                        showPromotionDialog(x, y); // Player's turn - show promotion dialog
+                    }else if(!onePlayer) {
+                    	showPromotionDialog(x, y);
+                    }
+                    else {
+                        board.promotePawn(x, y, 'Q'); // AI automatically promotes to Queen
+                        updateBoard(); // Update board to reflect the promotion
+                    }
+                }
+            }
+        }
+    }
+
 
     private synchronized void waitForPlayerMove(boolean isWhiteTurn) {
         try {
@@ -202,6 +224,13 @@ public class ChessGUI extends JFrame {
             Move move = new Move(selectedX, selectedY, x, y, moveType);
 
             if (board.filterMoves(selectedX, selectedY).contains(move) && board.move(selectedX, selectedY, move)) {
+                if (isPawnPromotion(x, y)) {
+                    if (whiteTurn) {
+                        showPromotionDialog(x, y); // Player chooses promotion
+                    } else {
+                        board.promotePawn(x, y, 'Q'); // AI automatically promotes to queen
+                    }
+                }
                 updateBoard();
                 resetSelection();
                 synchronized (this) {
@@ -213,6 +242,39 @@ public class ChessGUI extends JFrame {
             }
         }
     }
+
+
+    private boolean isPawnPromotion(int x, int y) {
+        Piece piece = board.getPieces()[x][y];
+        return piece.isNotEmpty() && piece.type() == Piece.PieceType.PAWN &&
+               ((piece.isWhite() && x == 0) || (!piece.isWhite() && x == 7));
+    }
+
+    private void showPromotionDialog(int x, int y) {
+        // Ensure dialog is created on the Event Dispatch Thread
+        SwingUtilities.invokeLater(() -> {
+            JDialog promotionDialog = new JDialog(this, "Pawn Promotion", true); // Modal dialog
+            promotionDialog.setLayout(new GridLayout(1, 4));
+            promotionDialog.setSize(300, 100);
+
+            String[] options = {"Queen", "Rook", "Bishop", "Knight"};
+            for (String option : options) {
+                JButton button = new JButton(option);
+                button.addActionListener(e -> {
+                    char promotionType = option.charAt(0); // First letter of the option
+                    board.promotePawn(x, y, promotionType); // Update board with the selected piece
+                    promotionDialog.dispose(); // Close the dialog
+                    updateBoard(); // Refresh the board UI
+                });
+                promotionDialog.add(button);
+            }
+
+            promotionDialog.setLocationRelativeTo(this); // Center the dialog relative to the main window
+            promotionDialog.setVisible(true); // Show the dialog
+        });
+    }
+
+
 
     private void highlightPossibleMoves(int x, int y) {
         List<Move> moves = board.filterMoves(x, y);

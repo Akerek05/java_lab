@@ -179,6 +179,25 @@ public List<Move> filterMoves(int x, int y) {
             .filter(m -> m.getOriginalX() == x && m.getOriginalY() == y)
             .toList();
 }
+public void promotePawn(int x, int y, char promotionType) {
+    boolean isWhite = pieces[x][y].isWhite();
+    switch (promotionType) {
+        case 'Q':
+            pieces[x][y] = new Queen(isWhite);
+            break;
+        case 'R':
+            pieces[x][y] = new Rook(isWhite);
+            break;
+        case 'B':
+            pieces[x][y] = new Bishop(isWhite);
+            break;
+        case 'K':
+            pieces[x][y] = new Knight(isWhite);
+            break;
+        default:
+            throw new IllegalArgumentException("Invalid promotion type: " + promotionType);
+    }
+}
 
 
 private List<Move> getAttackingMoves(int x, int y, boolean opponentIsWhite) {
