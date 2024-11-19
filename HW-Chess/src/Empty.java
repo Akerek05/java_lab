@@ -2,7 +2,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class Empty extends Piece {
-    public Empty() {
+	 private static final long serialVersionUID = 1L;
+	public Empty() {
         super(false); // Empty squares are neither white nor black
     }
 

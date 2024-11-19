@@ -1,28 +1,23 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.List;
+import java.io.*;
 import java.util.concurrent.Executors;
+import java.util.List;
+
 
 public class ChessGUI extends JFrame {
-    private Board board;
+	private Board board;
     private JButton[][] boardButtons;
-    private boolean singlePlayer;
-    private boolean playerPlaysWhite;
     private boolean whiteTurn = true; // White always starts
     private int selectedX = -1, selectedY = -1;
-
-    // The path to the pieces images
+    private JButton undoButton, saveButton, surrenderButton; // Save button added
     private static final String PIECES_PATH = "./pieces/";
-
-    // Add a new button for surrender
-    private JButton surrenderButton;
+    
 
     public ChessGUI() {
         setupMainMenu();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 800);
+        setSize(850, 800); // Setting size for the window
         setVisible(true);
     }
 
@@ -36,7 +31,10 @@ public class ChessGUI extends JFrame {
 
         JButton singlePlayerButton = new JButton("Single Player");
         JButton twoPlayerButton = new JButton("Two Player Hotseat");
+        JButton loadGameButton = new JButton("Load Game"); // Load button added
         JButton exitButton = new JButton("Exit");
+
+        getContentPane().removeAll();
 
         menuPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         menuPanel.add(title);
@@ -45,12 +43,16 @@ public class ChessGUI extends JFrame {
         menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         menuPanel.add(twoPlayerButton);
         menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        menuPanel.add(loadGameButton);
+        menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         menuPanel.add(exitButton);
 
         add(menuPanel);
+        revalidate();
 
         singlePlayerButton.addActionListener(e -> setupSinglePlayerMenu());
         twoPlayerButton.addActionListener(e -> startGame(false, true));
+        loadGameButton.addActionListener(e -> loadGame()); // Load button logic
         exitButton.addActionListener(e -> System.exit(0));
     }
 
@@ -79,8 +81,7 @@ public class ChessGUI extends JFrame {
     }
 
     private void startGame(boolean singlePlayer, boolean playerPlaysWhite) {
-        this.singlePlayer = singlePlayer;
-        this.playerPlaysWhite = playerPlaysWhite;
+        
 
         board = new Board();
         board.setupBoard();
@@ -92,10 +93,10 @@ public class ChessGUI extends JFrame {
 
     private void setupChessBoard() {
         JPanel chessBoardPanel = new JPanel(new BorderLayout());
+
         JPanel chessGridPanel = new JPanel(new GridLayout(8, 8));
         boardButtons = new JButton[8][8];
 
-        // Initialize the chessboard
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
                 JButton button = new JButton();
@@ -107,23 +108,46 @@ public class ChessGUI extends JFrame {
             }
         }
 
-        // Set up the surrender button
+        undoButton = new JButton("Undo");
+        undoButton.addActionListener(e -> handleUndo());
+
+        saveButton = new JButton("Save Game"); // Save button added
+        saveButton.addActionListener(e -> saveGame());
+
         surrenderButton = new JButton("Surrender");
         surrenderButton.addActionListener(e -> handleSurrender());
 
-        // Adding components to the panel
-        chessBoardPanel.add(chessGridPanel, BorderLayout.CENTER);
-        chessBoardPanel.add(surrenderButton, BorderLayout.SOUTH); // Add surrender button to bottom
+        JPanel sidePanel = new JPanel();
+        sidePanel.setLayout(new BoxLayout(sidePanel, BoxLayout.Y_AXIS));
+        sidePanel.add(undoButton);
+        sidePanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        sidePanel.add(saveButton);
+        sidePanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        sidePanel.add(surrenderButton);
+
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(chessGridPanel, BorderLayout.CENTER);
+        mainPanel.add(sidePanel, BorderLayout.EAST);
+
+        chessBoardPanel.add(mainPanel, BorderLayout.CENTER);
+        chessBoardPanel.setPreferredSize(new Dimension(800, 800));
 
         setContentPane(chessBoardPanel);
         revalidate();
         updateBoard();
     }
 
+
     private void handleSurrender() {
-        String winner = whiteTurn ? "Black" : "White"; // Opponent wins
-        JOptionPane.showMessageDialog(this, winner + " wins by surrender!");
-        resetGame();
+        // Handle the surrender logic
+        int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to surrender?", 
+                "Surrender", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.YES_OPTION) {
+            String winner = whiteTurn ? "Black" : "White"; // The opponent wins
+            JOptionPane.showMessageDialog(this, "You have surrendered. " + winner + " wins!");
+            resetGame();
+            setupMainMenu(); // Return to the main menu after surrender
+        }
     }
 
     private void Game(boolean onePlayer, boolean playerIsWhite) {
@@ -132,7 +156,7 @@ public class ChessGUI extends JFrame {
                 String winner = whiteTurn ? "Black" : "White"; // The opponent wins
                 JOptionPane.showMessageDialog(this, winner + " wins by checkmate!");
                 resetGame();
-                setupMainMenu(); // Return to the main menu
+                setupMainMenu(); // Return to the main menu after checkmate
                 return;
             }
 
@@ -150,32 +174,9 @@ public class ChessGUI extends JFrame {
                 waitForPlayerMove(whiteTurn);
             }
 
-            // Check for stalemate (no valid moves but the king is not in check)
-            if (!board.isCheckmate(whiteTurn)) {
-                Piece[][] playablePieces = board.getPlayablePieces(whiteTurn);
-                boolean hasValidMoves = false;
-                for (int i = 0; i < 8; i++) {
-                    for (int j = 0; j < 8; j++) {
-                        Piece piece = playablePieces[i][j];
-                        if (piece != null && !board.filterMoves(i, j).isEmpty()) {
-                            hasValidMoves = true;
-                            break;
-                        }
-                    }
-                    if (hasValidMoves) break;
-                }
-                if (!hasValidMoves) {
-                    JOptionPane.showMessageDialog(this, "Stalemate! The game is a draw.");
-                    resetGame();
-                    setupMainMenu(); // Return to the main menu
-                    return;
-                }
-            }
-
             whiteTurn = !whiteTurn; // Switch turns
         }
     }
-
 
     private synchronized void waitForPlayerMove(boolean isWhiteTurn) {
         try {
@@ -254,8 +255,10 @@ public class ChessGUI extends JFrame {
         return PIECES_PATH + colorPrefix + "-" + pieceName + ".png";
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(ChessGUI::new);
+    private void handleUndo() {
+        board.restorePreviousState(); // Restore the previous board state
+        updateBoard(); // Update the UI to reflect the restored state
+        whiteTurn = !whiteTurn; // Switch the turn back to the other player
     }
 
     private void resetGame() {
@@ -263,5 +266,40 @@ public class ChessGUI extends JFrame {
         board.setupBoard();
         setupChessBoard();
         whiteTurn = true; // Reset turn to white
+    }
+    private void saveGame() {
+        JFileChooser fileChooser = new JFileChooser();
+        int result = fileChooser.showSaveDialog(this);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+                oos.writeObject(board); // Save board
+                oos.writeBoolean(whiteTurn); // Save current turn
+                JOptionPane.showMessageDialog(this, "Game saved successfully!");
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Failed to save the game: " + e.getMessage());
+            }
+        }
+    }
+
+    private void loadGame() {
+        JFileChooser fileChooser = new JFileChooser();
+        int result = fileChooser.showOpenDialog(this);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                board = (Board) ois.readObject(); // Load board
+                whiteTurn = ois.readBoolean(); // Load current turn
+                setupChessBoard();
+                JOptionPane.showMessageDialog(this, "Game loaded successfully!");
+            } catch (IOException | ClassNotFoundException e) {
+                JOptionPane.showMessageDialog(this, "Failed to load the game: " + e.getMessage());
+            }
+        }
+    }
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(ChessGUI::new);
     }
 }

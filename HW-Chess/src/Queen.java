@@ -2,7 +2,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class Queen extends Piece {
-    @Override
+	private static final long serialVersionUID = 1L;
+	@Override
     public PieceType type() {
         return PieceType.QUEEN;
     }

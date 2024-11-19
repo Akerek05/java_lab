@@ -1,7 +1,9 @@
+import java.io.Serializable;
 import java.util.List;
 
-public abstract class Piece {
-    public enum PieceType {
+public abstract class Piece implements Serializable{
+	 private static final long serialVersionUID = 1L;
+	public enum PieceType {
         EMPTY, PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING;
     }
 

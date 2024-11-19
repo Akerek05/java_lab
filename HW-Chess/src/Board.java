@@ -2,7 +2,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
-public class Board {
+import java.io.Serializable;
+public class Board implements Serializable{
+private static final long serialVersionUID = 1L;
 private Piece[][] pieces;
 private Piece[][] previousBoardState1; // Board state before player's move
 private Piece[][] previousBoardState2; // Board state before AI's move
@@ -10,6 +12,9 @@ private Piece[][] previousBoardState3; // Board state before both moves
 
 public Board() {
 	pieces = new Piece[8][8];
+	previousBoardState1 = new Piece[8][8];
+	previousBoardState2 = new Piece[8][8];
+	previousBoardState3 = new Piece[8][8];
 	
 }
 public Piece[][] getPieces() {
@@ -68,10 +73,15 @@ public void setupBoard() {
 private void cloneBoard(Piece[][] sourceBoard, Piece[][] destinationBoard) {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
-            destinationBoard[i][j] = sourceBoard[i][j].clone();
+            if (sourceBoard[i][j] != null) {
+                destinationBoard[i][j] = sourceBoard[i][j].clone();
+            } else {
+                destinationBoard[i][j] = null; // Set to null if the square is empty
+            }
         }
     }
 }
+
 public void saveBoardState() {
     // Shift the board states
 	cloneBoard(previousBoardState2, previousBoardState3); 
@@ -251,6 +261,9 @@ public boolean move(int x, int y, Move move) {
         return false;
     }
 
+    // Save the board state before making the move
+    saveBoardState();
+
     int targetX = move.getX();
     int targetY = move.getY();
     Piece movingPiece = pieces[x][y];
@@ -268,6 +281,7 @@ public boolean move(int x, int y, Move move) {
     System.out.println("Move successful. Updated board.");
     return true;
 }
+
 
 
 public void makeComputerMove(boolean isWhite) {
