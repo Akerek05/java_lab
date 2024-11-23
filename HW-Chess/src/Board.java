@@ -134,7 +134,7 @@ public List<Move> filterMoves(int x, int y) {
                     isValidMove = true;
                 }
             } else if (currentPiece.type() == Piece.PieceType.KING) {
-                // For the king, ensure the target square is not under attack
+                // For the king, ensure the target square is not under attack after moving
                 List<Move> attackingMoves = getAttackingMoves(targetX, targetY, !currentPiece.isWhite());
                 if (move.getMoveType() == Move.MoveType.MOVE && targetPiece.type() == Piece.PieceType.EMPTY && attackingMoves.isEmpty()) {
                     isValidMove = true;
@@ -155,6 +155,12 @@ public List<Move> filterMoves(int x, int y) {
                 pieces[targetX][targetY] = currentPiece;
                 pieces[x][y] = new Empty(); // Assuming EmptyPiece represents an empty square
 
+                // If the piece being moved is the king, update the king's position
+                if (currentPiece.type() == Piece.PieceType.KING) {
+                    kingX = targetX;
+                    kingY = targetY;  // Update the king's position after the move
+                }
+
                 // Check if the king is under attack after this move
                 List<Move> attackingMoves = getAttackingMoves(kingX, kingY, !currentPiece.isWhite());
                 boolean kingInCheckAfterMove = !attackingMoves.isEmpty();
@@ -169,6 +175,7 @@ public List<Move> filterMoves(int x, int y) {
                 pieces[x][y] = currentPiece;
                 pieces[targetX][targetY] = originalPiece;
             }
+
         }
     }
 
@@ -179,6 +186,7 @@ public List<Move> filterMoves(int x, int y) {
             .filter(m -> m.getOriginalX() == x && m.getOriginalY() == y)
             .toList();
 }
+
 public void promotePawn(int x, int y, char promotionType) {
     boolean isWhite = pieces[x][y].isWhite();
     switch (promotionType) {
@@ -370,5 +378,14 @@ public Move.MoveType getMoveType(int startX, int startY, int endX, int endY) {
         ? Move.MoveType.ATTACK 
         : Move.MoveType.MOVE;
 }
+public Piece[][] getPreviousBoardState1() {
+	
+	return previousBoardState1;
+}
+public Piece[][] getPreviousBoardState2() {
+	
+	return previousBoardState2;
+}
+
 
 };

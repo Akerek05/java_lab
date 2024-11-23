@@ -45,10 +45,7 @@ public class Move {
                moveType == move.moveType;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(originalX, originalY, targetX, targetY, moveType);
-    }
+    
 
     @Override
     public String toString() {
